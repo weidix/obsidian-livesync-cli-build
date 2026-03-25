@@ -36,6 +36,14 @@ You must install Node.js yourself before using the artifact.
 5. Create a minimal runtime package
 6. Upload a `tar.gz` artifact
 
+## Compatibility patching
+
+The wrapper may apply a minimal build-time compatibility patch when the latest upstream tag contains a known CLI build break.
+
+At the moment, this wrapper fixes a bad import in `src/apps/cli/commands/p2p.ts` found in upstream `0.25.54`, replacing the broken import target with the actual exported helper module.
+
+The goal is only to make the upstream CLI buildable as packaged upstream code, not to maintain a downstream feature fork.
+
 ## Using the downloaded artifact
 
 After extracting the archive:

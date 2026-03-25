@@ -53,6 +53,9 @@ jobs:
         run: npm install
         working-directory: upstream
 
+      - name: Apply upstream compatibility patches
+        run: node scripts/apply-upstream-patches.mjs --upstream "$GITHUB_WORKSPACE/upstream"
+
       - name: Build upstream CLI
         run: npm run build
         working-directory: upstream/src/apps/cli
