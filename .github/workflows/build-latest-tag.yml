@@ -1,0 +1,80 @@
+name: Build Latest Upstream Tag
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "23 3 * * *"
+
+jobs:
+  resolve-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+    steps:
+      - name: Check out wrapper repository
+        uses: actions/checkout@v4
+
+      - name: Resolve latest upstream tag
+        id: resolve
+        run: |
+          tag="$(node scripts/get-latest-tag.mjs)"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Resolved latest tag: $tag"
+
+  build-macos-arm64:
+    needs: resolve-tag
+    runs-on: macos-14
+    env:
+      UPSTREAM_TAG: ${{ needs.resolve-tag.outputs.tag }}
+      PLATFORM_NAME: macos-arm64
+    steps:
+      - name: Check out wrapper repository
+        uses: actions/checkout@v4
+
+      - name: Check out upstream repository
+        uses: actions/checkout@v4
+        with:
+          repository: vrtmrz/obsidian-livesync
+          ref: ${{ env.UPSTREAM_TAG }}
+          path: upstream
+          submodules: recursive
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: upstream/package-lock.json
+
+      - name: Install upstream dependencies
+        run: npm ci
+        working-directory: upstream
+
+      - name: Build upstream CLI
+        run: npm run build
+        working-directory: upstream/src/apps/cli
+
+      - name: Create runtime package
+        run: |
+          node scripts/create-runtime-package.mjs \
+            --upstream "$GITHUB_WORKSPACE/upstream" \
+            --tag "$UPSTREAM_TAG" \
+            --platform "$PLATFORM_NAME" \
+            --out "$RUNNER_TEMP/output"
+
+      - name: Archive runtime package
+        run: |
+          archive="obsidian-livesync-cli-${UPSTREAM_TAG}-${PLATFORM_NAME}.tar.gz"
+          tar -czf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/output" "obsidian-livesync-cli-${UPSTREAM_TAG}-${PLATFORM_NAME}"
+          echo "ARCHIVE_PATH=$RUNNER_TEMP/$archive" >> "$GITHUB_ENV"
+          echo "ARCHIVE_NAME=$archive" >> "$GITHUB_ENV"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARCHIVE_NAME }}
+          path: ${{ env.ARCHIVE_PATH }}
+          if-no-files-found: error
