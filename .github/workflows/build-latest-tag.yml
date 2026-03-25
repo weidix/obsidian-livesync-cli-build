@@ -50,7 +50,7 @@ jobs:
           cache-dependency-path: upstream/package-lock.json
 
       - name: Install upstream dependencies
-        run: npm ci
+        run: npm install
         working-directory: upstream
 
       - name: Build upstream CLI
