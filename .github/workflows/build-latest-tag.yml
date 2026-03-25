@@ -1,5 +1,8 @@
 name: Build Latest Upstream Tag
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   push:
@@ -81,3 +84,17 @@ jobs:
           name: ${{ env.ARCHIVE_NAME }}
           path: ${{ env.ARCHIVE_PATH }}
           if-no-files-found: error
+
+      - name: Publish release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.UPSTREAM_TAG }}
+          name: obsidian-livesync-cli
+          files: ${{ env.ARCHIVE_PATH }}
+          overwrite_files: true
+          body: |
+            Packaged CLI build from upstream tag `${{ env.UPSTREAM_TAG }}`.
+
+            Notes:
+            - Node.js is not bundled
+            - Runtime requirement: Node.js 22+

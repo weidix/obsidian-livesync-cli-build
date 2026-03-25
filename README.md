@@ -35,6 +35,7 @@ You must install Node.js yourself before using the artifact.
 4. Build the upstream CLI
 5. Create a minimal runtime package
 6. Upload a `tar.gz` artifact
+7. Publish the same archive to a GitHub Release whose tag matches the upstream tag
 
 ## Compatibility patching
 
