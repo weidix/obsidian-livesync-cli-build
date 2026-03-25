@@ -8,6 +8,16 @@ BIN_DIR="${LIVESYNC_CLI_BIN_DIR:-$HOME/.local/bin}"
 BIN_PATH="$BIN_DIR/livesync-cli"
 DRY_RUN="${LIVESYNC_CLI_DRY_RUN:-0}"
 
+write_wrapper() {
+    mkdir -p "$BIN_DIR"
+    cat >"$BIN_PATH" <<EOF
+#!/usr/bin/env sh
+set -eu
+exec node "$INSTALL_ROOT/dist/index.cjs" "\$@"
+EOF
+    chmod +x "$BIN_PATH"
+}
+
 usage() {
     cat <<'EOF'
 Usage: install-livesync-cli.sh <install|update|uninstall>
@@ -30,9 +40,13 @@ require_command() {
 }
 
 resolve_latest_version() {
-    require_command curl
-    response="$(curl -fsSL "https://api.github.com/repos/$REPOSITORY/releases/latest" | tr -d '\n')"
-    version="$(printf '%s' "$response" | sed -n 's/.*"tag_name":"\([^"]*\)".*/\1/p')"
+    if [ -n "${LIVESYNC_CLI_LATEST_RELEASE_JSON:-}" ]; then
+        response="$LIVESYNC_CLI_LATEST_RELEASE_JSON"
+    else
+        require_command curl
+        response="$(curl -fsSL "https://api.github.com/repos/$REPOSITORY/releases/latest")"
+    fi
+    version="$(printf '%s' "$response" | tr -d '\n' | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
     if [ -z "$version" ]; then
         printf 'Failed to resolve the latest release tag for %s\n' "$REPOSITORY" >&2
         exit 1
@@ -111,7 +125,7 @@ install_or_update() {
     rm -rf "$INSTALL_ROOT"
     mkdir -p "$(dirname "$INSTALL_ROOT")"
     mv "$extracted_package" "$INSTALL_ROOT"
-    ln -sf "$INSTALL_ROOT/bin/livesync-cli" "$BIN_PATH"
+    write_wrapper
 
     printf 'Installed %s to %s\n' "$version" "$INSTALL_ROOT"
     printf 'Command path: %s\n' "$BIN_PATH"
