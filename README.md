@@ -47,11 +47,35 @@ The goal is only to make the upstream CLI buildable as packaged upstream code, n
 
 ## Using the downloaded artifact
 
+Install the latest release directly:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/weidix/obsidian-livesync-cli-build/main/scripts/install-livesync-cli.sh | sh -s -- install
+```
+
+Update an existing installation:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/weidix/obsidian-livesync-cli-build/main/scripts/install-livesync-cli.sh | sh -s -- update
+```
+
+Uninstall:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/weidix/obsidian-livesync-cli-build/main/scripts/install-livesync-cli.sh | sh -s -- uninstall
+```
+
+The script installs the CLI into `~/.local/share/obsidian-livesync-cli` and links `livesync-cli` into `~/.local/bin/livesync-cli`.
+
 After extracting the archive:
 
 ```bash
 ./bin/livesync-cli --help
 ```
+
+Upstream CLI usage reference:
+
+- <https://github.com/vrtmrz/obsidian-livesync/blob/main/src/apps/cli/README.md>
 
 Example:
 
